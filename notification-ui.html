@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --surface3: #26262e;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0eff4;
+    --text-muted: #7c7b8a;
+    --text-dim: #4a4958;
+    --accent: #7b61ff;
+    --accent-glow: rgba(123,97,255,0.18);
+    --success: #22c55e;
+    --success-bg: rgba(34,197,94,0.1);
+    --success-border: rgba(34,197,94,0.25);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.1);
+    --warning-border: rgba(245,158,11,0.25);
+    --danger: #ef4444;
+    --danger-bg: rgba(239,68,68,0.1);
+    --danger-border: rgba(239,68,68,0.25);
+    --info: #3b82f6;
+    --info-bg: rgba(59,130,246,0.1);
+    --info-border: rgba(59,130,246,0.25);
+    --purple: #a855f7;
+    --purple-bg: rgba(168,85,247,0.1);
+    --purple-border: rgba(168,85,247,0.25);
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px 80px;
+    overflow-x: hidden;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 12px; }
+
+  .bell-wrap {
+    position: relative;
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .bell-icon {
+    width: 20px; height: 20px;
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: bell-swing 3s ease-in-out 1s infinite;
+    transform-origin: top center;
+  }
+
+  @keyframes bell-swing {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    65% { transform: rotate(12deg); }
+    70% { transform: rotate(-10deg); }
+    75% { transform: rotate(8deg); }
+    80% { transform: rotate(-6deg); }
+    85% { transform: rotate(4deg); }
+    90% { transform: rotate(-2deg); }
+  }
+
+  .badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    animation: badge-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;
+  }
+
+  @keyframes badge-pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .mark-all {
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid rgba(123,97,255,0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .mark-all:hover { background: rgba(123,97,255,0.25); }
+
+  /* ── Section Label ── */
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 12px;
+  }
+
+  /* ── Notification Card ── */
+  .notif {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    animation: slide-in 0.45s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  .notif:hover {
+    border-color: var(--border-hover);
+    background: var(--surface2);
+    transform: translateY(-1px);
+  }
+
+  .notif::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 16px 0 0 16px;
+    transition: opacity 0.3s;
+  }
+
+  .notif.unread::before { opacity: 1; }
+  .notif.read::before { opacity: 0; }
+
+  .notif.success::before { background: var(--success); }
+  .notif.warning::before { background: var(--warning); }
+  .notif.danger::before { background: var(--danger); }
+  .notif.info::before { background: var(--info); }
+  .notif.purple::before { background: var(--purple); }
+  .notif.neutral::before { background: var(--text-dim); }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .notif:nth-child(1) { animation-delay: 0.05s; }
+  .notif:nth-child(2) { animation-delay: 0.12s; }
+  .notif:nth-child(3) { animation-delay: 0.19s; }
+  .notif:nth-child(4) { animation-delay: 0.26s; }
+  .notif:nth-child(5) { animation-delay: 0.33s; }
+  .notif:nth-child(6) { animation-delay: 0.40s; }
+  .notif:nth-child(7) { animation-delay: 0.47s; }
+
+  /* ── Icon ── */
+  .notif-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .notif-icon svg {
+    width: 18px; height: 18px;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .notif.success .notif-icon { background: var(--success-bg); border: 1px solid var(--success-border); }
+  .notif.success .notif-icon svg { stroke: var(--success); }
+  .notif.warning .notif-icon { background: var(--warning-bg); border: 1px solid var(--warning-border); }
+  .notif.warning .notif-icon svg { stroke: var(--warning); }
+  .notif.danger .notif-icon { background: var(--danger-bg); border: 1px solid var(--danger-border); }
+  .notif.danger .notif-icon svg { stroke: var(--danger); }
+  .notif.info .notif-icon { background: var(--info-bg); border: 1px solid var(--info-border); }
+  .notif.info .notif-icon svg { stroke: var(--info); }
+  .notif.purple .notif-icon { background: var(--purple-bg); border: 1px solid var(--purple-border); }
+  .notif.purple .notif-icon svg { stroke: var(--purple); }
+  .notif.neutral .notif-icon { background: var(--surface3); border: 1px solid var(--border); }
+  .notif.neutral .notif-icon svg { stroke: var(--text-muted); }
+
+  /* Avatar icon */
+  .notif-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    border: 2px solid var(--border);
+  }
+
+  .notif-avatar-placeholder {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Content ── */
+  .notif-body { flex: 1; min-width: 0; }
+
+  .notif-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .notif-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .notif-time {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  .notif-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .notif-text strong { color: var(--text); font-weight: 500; }
+
+  /* ── Actions ── */
+  .notif-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn-primary, .btn-ghost {
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #6b53e8; }
+
+  .btn-ghost {
+    background: var(--surface3);
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-hover); }
+
+  .btn-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger-border);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+  .btn-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success-border);
+  }
+  .btn-success:hover { background: rgba(34,197,94,0.18); }
+
+  /* ── Unread dot ── */
+  .unread-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 5px;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  /* ── Progress bar ── */
+  .notif-progress {
+    margin-top: 10px;
+    height: 4px;
+    border-radius: 99px;
+    background: var(--surface3);
+    overflow: hidden;
+  }
+  .notif-progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--success);
+    animation: grow-bar 1.5s cubic-bezier(0.22,1,0.36,1) 0.5s both;
+  }
+  @keyframes grow-bar {
+    from { width: 0%; }
+  }
+
+  /* ── Image attachment ── */
+  .notif-img {
+    margin-top: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 80px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notif-img-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e1e2e 0%, #2a1e3e 50%, #1e2a3e 100%);
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .notif-img-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+
+  /* ── Reaction row ── */
+  .reaction-row {
+    display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .reaction {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reaction:hover { border-color: var(--border-hover); color: var(--text); }
+  .reaction span:first-child { font-size: 14px; }
+
+  /* ── Tag ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .tag.new { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(123,97,255,0.3); }
+  .tag.mention { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0 16px;
+  }
+  .divider span {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .footer a {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer a:hover { color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+  }
+  .empty-icon {
+    width: 48px; height: 48px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+  }
+  .empty-icon svg { width: 22px; height: 22px; stroke: var(--text-dim); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .empty p { font-size: 13px; }
+
+  /* ── Notification type previews at bottom ── */
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .type-chip {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+  }
+  .type-chip .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header" style="animation: slide-in 0.4s cubic-bezier(0.22,1,0.36,1) both;">
+    <div class="header-left">
+      <div class="bell-wrap">
+        <svg class="bell-icon" viewBox="0 0 24 24">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <div class="badge">6</div>
+      </div>
+      <div>
+        <div class="header-title">Notifications</div>
+        <div class="header-subtitle">6 unread updates</div>
+      </div>
+    </div>
+    <a class="mark-all" href="#">Mark all read</a>
+  </div>
+
+  <!-- New section -->
+  <p class="section-label">New</p>
+
+  <!-- 1. Success -->
+  <div class="notif success unread" style="animation-delay:0.08s">
+    <div class="notif-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">Payment Successful <span class="tag new">New</span></div>
+        <span class="notif-time">Just now</span>
+      </div>
+      <p class="notif-text">Your subscription to <strong>Pro Plan</strong> has been activated. Billing on the 3rd each month.</p>
+      <div class="notif-actions">
+        <a class="btn-success" href="#">View Receipt</a>
+        <a class="btn-ghost" href="#">Manage Plan</a>
+      </div>
+    </div>
+    <div class="unread-dot"></div>
+  </div>
+
+  <!-- 2. Mention / Message -->
+  <div class="notif purple unread" style="animation-delay:0.16s">
+    <div class="notif-avatar-placeholder" style="background:rgba(168,85,247,0.15);color:#a855f7;border-color:rgba(168,85,247,0.3)">JR</div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">Jamie Rivera <span class="tag mention">@you</span></div>
+        <span class="notif-time">2m ago</span>
+      </div>
+      <p class="notif-text">"Hey <strong>@alex</strong> can you review the Q4 deck before the 3 PM call? Left some comments on slide 7."</p>
+      <div class="reaction-row">
+        <div class="reaction"><span>👍</span><span>12</span></div>
+        <div class="reaction"><span>🔥</span><span>4</span></div>
+        <div class="reaction"><span>💬</span><span>Reply</span></div>
+      </div>
+    </div>
+    <div class="unread-dot"></div>
+  </div>
+
+  <!-- 3. Warning -->
+  <div class="notif warning unread" style="animation-delay:0.24s">
+    <div class="notif-icon">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">Storage Almost Full</div>
+        <span class="notif-time">18m ago</span>
+      </div>
+      <p class="notif-text">You've used <strong>87%</strong> of your 50 GB storage. Free up space or upgrade your plan.</p>
+      <div class="notif-progress">
+        <div class="notif-progress-bar" style="width:87%; background:var(--warning);"></div>
+      </div>
+      <div class="notif-actions" style="margin-top:10px">
+        <a class="btn-primary" href="#">Upgrade Storage</a>
+        <a class="btn-ghost" href="#">Manage Files</a>
+      </div>
+    </div>
+    <div class="unread-dot"></div>
+  </div>
+
+  <!-- 4. Danger -->
+  <div class="notif danger unread" style="animation-delay:0.32s">
+    <div class="notif-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">Unusual Login Detected</div>
+        <span class="notif-time">1h ago</span>
+      </div>
+      <p class="notif-text">A login from <strong>Lagos, Nigeria</strong> on Chrome/Windows was flagged. Not you? Secure your account.</p>
+      <div class="notif-actions">
+        <a class="btn-danger" href="#">Secure Account</a>
+        <a class="btn-ghost" href="#">It was me</a>
+      </div>
+    </div>
+    <div class="unread-dot"></div>
+  </div>
+
+  <!-- Earlier divider -->
+  <div class="divider"><span>Earlier</span></div>
+
+  <!-- 5. Info with image -->
+  <div class="notif info read" style="animation-delay:0.40s">
+    <div class="notif-icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    </div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">New Feature: Dark Mode</div>
+        <span class="notif-time">Yesterday</span>
+      </div>
+      <p class="notif-text">We've rolled out system-aware dark mode across all surfaces. Enable it in <strong>Settings → Appearance</strong>.</p>
+      <div class="notif-img">
+        <div class="notif-img-inner">
+          <div class="notif-img-dot" style="background:#7b61ff"></div>
+          <div class="notif-img-dot" style="background:#a855f7"></div>
+          <div class="notif-img-dot" style="background:#3b82f6"></div>
+          <span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px;font-family:'Syne',sans-serif;letter-spacing:1px">DARK MODE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Neutral / social -->
+  <div class="notif neutral read" style="animation-delay:0.48s">
+    <div class="notif-avatar-placeholder" style="background:var(--surface3);color:var(--text-muted)">SR</div>
+    <div class="notif-body">
+      <div class="notif-top">
+        <div class="notif-title">Sarah R. liked your post</div>
+        <span class="notif-time">2 days ago</span>
+      </div>
+      <p class="notif-text">"How I reduced our API latency by 40% using edge caching — a thread 🧵"</p>
+      <div class="notif-actions">
+        <a class="btn-ghost" href="#">View Post</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <a href="#">View all notifications →</a>
+  </div>
+
+</div>
+</body>
+</html>
